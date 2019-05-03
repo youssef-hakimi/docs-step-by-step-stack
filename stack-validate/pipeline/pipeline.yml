@@ -1,0 +1,237 @@
+shared:
+  - &slack-alert
+    author_name: cycloid.io
+    author_link: https://www.cycloid.io/
+    title_link: https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID
+    fields:
+      - title: Project
+        value: youdeploy-http-api
+        short: true
+      - title: Environment
+        value: ((env))
+        short: true
+  # Task : run tests
+  - &run-tests
+    args:
+    - '-ec'
+    - |
+      source /docker-lib.sh
+      start_docker
+      #
+      # Docker images
+      #
+      for i in debian-stretch
+      do
+        echo "Loading $i..."
+        (docker load -qi $i/image > /dev/null && \
+        docker tag "$(cat $i/image-id)" "$(cat $i/repository):$(cat $i/tag)" > /dev/null) && \
+        echo "OK" || \
+        exit 1
+      done
+      export ANSIBLE_PIP="ansible"
+      if [[ -n "$ANSIBLE_PIP_VERSION" ]]; then
+        export ANSIBLE_PIP="ansible==$ANSIBLE_PIP_VERSION"
+      fi
+      if [[ -n "$SSH_AGENT_KEY" ]]; then
+        apk add --update -q --no-progress openssh-client
+        echo -n "$SSH_AGENT_KEY" > /root/id_rsa && chmod 600 /root/id_rsa
+        eval $(ssh-agent )
+        ssh-add /root/id_rsa
+      fi
+      set -x
+      apk add --update -q --no-progress gcc python-dev libc-dev libffi-dev openssl-dev make linux-headers git
+      pip install -q virtualenv
+      if ! [ -f ".env/bin/activate" ]; then virtualenv .env; fi
+      ln -s $PWD/.env /.env
+      # Expose git repository name as molecule lookup also ../ for ansible roles. Can be useful in case you test a role itself
+      ln -s $PWD/code $(basename $(git --git-dir=code/.git remote get-url origin) | sed 's/.git$//')
+      source /.env/bin/activate
+      pip install -q molecule docker-py $ANSIBLE_PIP
+      cd code/$ANSIBLE_PATH
+      molecule test
+
+  # Task : sync and merge with rsync 2 rep. Used to merge stack and config
+  - &merge-stack-and-config
+    platform: linux
+    image_resource:
+      type: docker-image
+      source:
+        repository: cycloid/cycloid-toolkit
+        tag: latest
+    run:
+      path: /usr/bin/merge-stack-and-config
+    outputs:
+    - name: merged-stack
+      path: "merged-stack"
+
+groups:
+- name: tests
+  jobs:
+  - test-pr
+  - test-((git_branch))
+
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+
+
+- name: report-github-status
+  type: docker-image
+  source:
+    # Use cycloid one because of https://github.com/dpb587/github-status-resource/pull/2
+    # repository: dpb587/github-status-resource
+    # tag: master
+    repository: cycloid/github-status-resource
+
+resources:
+
+#
+# Docker images
+#
+- name: debian-stretch
+  type: docker-image
+  source:
+    repository: debian
+    tag: stretch
+
+- name: report-status
+  type: report-github-status
+  source:
+    access_token: ((git_access_token))
+    branch: ((git_branch))
+    repository: ((git_repository_name))
+
+- name: pull-request
+  type: pull-request
+  source:
+    uri: ((git_repository))
+    repo: ((git_repository_name))
+    access_token: ((git_access_token))
+    private_key: ((git_key))
+    base_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME'
+
+- name: git_repo
+  type: git
+  source:
+    uri: ((git_repository))
+    branch: ((git_branch))
+    private_key: ((git_key))
+
+
+jobs:
+
+  - name: test-pr
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    serial: true
+    plan:
+#
+# Docker images
+#
+      - get: debian-stretch
+        params:
+          save: true
+
+      - get: pull-request
+        resource: pull-request
+        trigger: true
+        version: every
+
+      - put: pull-request
+        params:
+          context: stack-validate
+          path: pull-request
+          status: pending
+      - task: run-test
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: cycloid/dcind
+              tag: latest
+          run:
+            path: /bin/sh
+            <<: *run-tests
+          caches:
+             - path: ".env"
+          params: ((molecule_env_vars))
+          inputs:
+            - name: pull-request
+              path: code
+#
+# Docker images
+#
+            - name: debian-stretch
+
+        on_failure:
+          put: pull-request
+          params:
+            context: stack-validate
+            path: pull-request
+            status: failure
+        on_success:
+          put: pull-request
+          params:
+            context: stack-validate
+            path: pull-request
+            status: success
+
+
+
+  - name: test-((git_branch))
+    build_logs_to_retain: 10
+    max_in_flight: 1
+    plan:
+#
+# Docker images
+#
+      - get: debian-stretch
+        params:
+          save: true
+
+      - get: ((git_branch))
+        resource: git_repo
+        trigger: true
+      - task: run-test
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: cycloid/dcind
+              tag: latest
+          run:
+            path: /bin/sh
+            <<: *run-tests
+          caches:
+             - path: ".env"
+          params: ((molecule_env_vars))
+          inputs:
+            - name: ((git_branch))
+              path: code
+#
+# Docker images
+#
+            - name: debian-stretch
+
+        on_success:
+          try:
+            put: report-status
+            params:
+              commit: ((git_branch))
+              context: stack-validate
+              state: success
+              target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
+        on_failure:
+          try:
+            put: report-status
+            params:
+              commit: ((git_branch))
+              context: stack-validate
+              state: failure
+              target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'

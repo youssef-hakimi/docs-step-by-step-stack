@@ -1,0 +1,17 @@
+env: ($ environment $)
+project: ($ project $)
+customer: ($ organization_canonical $)
+
+git_repository: git@github.com/my/repo_to_validate.git
+
+# git status
+git_repository_name: my/repo_to_validate.git
+git_access_token: ((github_access_token.data))
+git_key: ((git.ssh_key))
+
+molecule_env_vars:
+  ANSIBLE_PIP_VERSION: 2.4.6
+  SSH_AGENT_KEY: ((git.ssh_key))
+  ANSIBLE_PATH: ansible
+
+git_branch: ($ environment $)
