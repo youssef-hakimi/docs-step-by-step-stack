@@ -11,7 +11,7 @@ shared:
         value: ((env))
         short: true
   # Task : run tests
-  - &run-tests
+  - &run-ansible-tests
     args:
     - '-ec'
     - |
@@ -50,6 +50,14 @@ shared:
       cd code/$ANSIBLE_PATH
       molecule test
 
+
+  - &run-terraform-tests
+    args:
+    - '-ec'
+    - |
+      cd code/$TERRAFORM_PATH
+      terraform plan
+
   # Task : sync and merge with rsync 2 rep. Used to merge stack and config
   - &merge-stack-and-config
     platform: linux
@@ -67,8 +75,18 @@ shared:
 groups:
 - name: tests
   jobs:
-  - test-pr
-  - test-((git_branch))
+  - ansible-test-pr
+  - ansible-test-((git_branch))
+  - terraform-test-((git_branch))
+
+- name: ansible
+  jobs:
+  - ansible-test-pr
+  - ansible-test-((git_branch))
+
+- name: terraform
+  jobs:
+  - terraform-test-((git_branch))
 
 resource_types:
 - name: pull-request
@@ -122,7 +140,7 @@ resources:
 
 jobs:
 
-  - name: test-pr
+  - name: ansible-test-pr
     max_in_flight: 1
     build_logs_to_retain: 10
     serial: true
@@ -155,7 +173,7 @@ jobs:
               tag: latest
           run:
             path: /bin/sh
-            <<: *run-tests
+            <<: *run-ansible-tests
           caches:
              - path: ".env"
           params: ((molecule_env_vars))
@@ -182,7 +200,7 @@ jobs:
 
 
 
-  - name: test-((git_branch))
+  - name: ansible-test-((git_branch))
     build_logs_to_retain: 10
     max_in_flight: 1
     plan:
@@ -207,10 +225,66 @@ jobs:
               tag: latest
           run:
             path: /bin/sh
-            <<: *run-tests
+            <<: *run-ansible-tests
           caches:
              - path: ".env"
           params: ((molecule_env_vars))
+          inputs:
+            - name: ((git_branch))
+              path: code
+#
+# Docker images
+#
+            - name: debian-stretch
+
+        on_success:
+          try:
+            put: report-status
+            params:
+              commit: ((git_branch))
+              context: stack-validate
+              state: success
+              target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
+        on_failure:
+          try:
+            put: report-status
+            params:
+              commit: ((git_branch))
+              context: stack-validate
+              state: failure
+              target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
+
+
+
+  - name: terraform-test-((git_branch))
+    build_logs_to_retain: 10
+    max_in_flight: 1
+    plan:
+#
+# Docker images
+#
+      - get: debian-stretch
+        params:
+          save: true
+
+      - get: ((git_branch))
+        resource: git_repo
+        trigger: true
+      - task: hashicorp/terraform
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: cycloid/dcind
+              tag: latest
+          run:
+            path: /bin/sh
+            <<: *run-terraform-tests
+          caches:
+             - path: ".env"
+          params: ((terraform_env_vars))
           inputs:
             - name: ((git_branch))
               path: code

@@ -14,4 +14,7 @@ molecule_env_vars:
   SSH_AGENT_KEY: ((git.ssh_key))
   ANSIBLE_PATH: ansible
 
+terraform_env_vars:
+  TERRAFORM_PATH: terraform
+
 git_branch: ($ environment $)
