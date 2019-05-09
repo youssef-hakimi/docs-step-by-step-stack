@@ -2,7 +2,7 @@ env: ($ environment $)
 project: ($ project $)
 customer: ($ organization_canonical $)
 
-git_repository: git@github.com/my/repo_to_validate.git
+git_repository: git@github.com:my/repo_to_validate.git
 
 # git status
 git_repository_name: my/repo_to_validate
