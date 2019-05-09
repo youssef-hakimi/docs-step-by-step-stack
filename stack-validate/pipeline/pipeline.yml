@@ -263,9 +263,6 @@ jobs:
 #
 # Docker images
 #
-      - get: debian-stretch
-        params:
-          save: true
 
       - get: ((git_branch))
         resource: git_repo
@@ -288,10 +285,6 @@ jobs:
           inputs:
             - name: ((git_branch))
               path: code
-#
-# Docker images
-#
-            - name: debian-stretch
 
         on_success:
           try:

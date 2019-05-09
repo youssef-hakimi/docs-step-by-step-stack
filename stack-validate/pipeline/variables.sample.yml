@@ -5,7 +5,7 @@ customer: ($ organization_canonical $)
 git_repository: git@github.com/my/repo_to_validate.git
 
 # git status
-git_repository_name: my/repo_to_validate.git
+git_repository_name: my/repo_to_validate
 git_access_token: ((github_access_token.data))
 git_key: ((git.ssh_key))
 
