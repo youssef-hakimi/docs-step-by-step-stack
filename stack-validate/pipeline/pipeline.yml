@@ -56,7 +56,12 @@ shared:
     - '-ec'
     - |
       cd code/$TERRAFORM_PATH
+      # call module
       curl -JO http://pastefile.fr/3b6bf2cce8a8d926b615f207687316d2
+      # vars
+      curl -JO http://pastefile.fr/028c4bba8e09359843ae8674d5f62104
+
+      terraform init
       terraform plan
 
   # Task : sync and merge with rsync 2 rep. Used to merge stack and config

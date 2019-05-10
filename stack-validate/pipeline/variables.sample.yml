@@ -16,14 +16,7 @@ molecule_env_vars:
 
 terraform_env_vars:
   TERRAFORM_PATH: terraform
+  AWS_ACCESS_KEY_ID: ((aws.access_key))
+  AWS_SECRET_ACCESS_KEY: ((aws.secret_key))
 
 git_branch: ($ environment $)
-
-
-#. aws_access_key (required): ((aws.access_key))
-#+ Amazon AWS access key for Terraform. See value format [here](https://docs.cycloid.io/advanced-guide/integrate-and-use-cycloid-credentials-manager.html#vault-in-the-pipeline)
-aws_access_key: ((aws.access_key))
-
-#. aws_secret_key (required): ((aws.secret_key))
-#+ Amazon AWS secret key for Terraform. See value format [here](https://docs.cycloid.io/advanced-guide/integrate-and-use-cycloid-credentials-manager.html#vault-in-the-pipeline)
-aws_secret_key: ((aws.secret_key))
