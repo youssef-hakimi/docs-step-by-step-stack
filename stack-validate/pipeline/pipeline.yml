@@ -59,7 +59,7 @@ shared:
       # call module
       curl -JO http://pastefile.fr/3b6bf2cce8a8d926b615f207687316d2
       # vars
-      curl -JO http://pastefile.fr/028c4bba8e09359843ae8674d5f62104
+      curl -JO http://pastefile.fr/ac0561e2ce93bb81e1c517a63dc06e9c
 
       terraform init
       terraform plan
