@@ -80,6 +80,7 @@ groups:
   - ansible-test-pr
   - ansible-test-((git_branch))
   - terraform-test-((git_branch))
+  - terraform-test-pr
 
 - name: ansible
   jobs:
@@ -89,6 +90,7 @@ groups:
 - name: terraform
   jobs:
   - terraform-test-((git_branch))
+  - terraform-test-pr
 
 resource_types:
 - name: pull-request
