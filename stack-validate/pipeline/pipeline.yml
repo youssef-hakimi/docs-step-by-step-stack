@@ -258,32 +258,34 @@ jobs:
 
 
 
-  - name: terraform-test-((git_branch))
-    build_logs_to_retain: 10
+  - name: terraform-test-pr
     max_in_flight: 1
+    build_logs_to_retain: 10
+    serial: true
     plan:
-#
-# Docker images
-#
 
-      - get: ((git_branch))
-        resource: git_repo
+      - get: pull-request
+        resource: pull-request
         trigger: true
+        version: every
+
+      - put: pull-request
+        params:
+          context: stack-validate
+          path: pull-request
+          status: pending
 
       - task: merge-stack-and-config
         config:
           <<: *merge-stack-and-config
           inputs:
-          - name: ((git_branch))
+          - name: pull-request
             path: "config"
-          - name: ((git_branch))
+          - name: pull-request
             path: "stack"
         params:
           CONFIG_PATH: ((config_terraform_path))
           STACK_PATH: ((stack_terraform_path))
-          #STACK_ROOT_PATH="stack"
-          #CONFIG_ROOT_PATH="config"
-
 
       - task: run-test
         privileged: true
@@ -301,8 +303,61 @@ jobs:
              - path: ".env"
           params: ((terraform_env_vars))
           inputs:
-            - name: ((git_branch))
-              path: code
+            - name: merged-stack
+
+        on_success:
+          put: pull-request
+          params:
+            context: stack-validate
+            path: pull-request
+            status: success
+        on_failure:
+          put: pull-request
+          params:
+            context: stack-validate
+            path: pull-request
+            status: failure
+
+
+
+
+  - name: terraform-test-((git_branch))
+    build_logs_to_retain: 10
+    max_in_flight: 1
+    plan:
+      - get: ((git_branch))
+        resource: git_repo
+        trigger: true
+
+      - task: merge-stack-and-config
+        config:
+          <<: *merge-stack-and-config
+          inputs:
+          - name: ((git_branch))
+            path: "config"
+          - name: ((git_branch))
+            path: "stack"
+        params:
+          CONFIG_PATH: ((config_terraform_path))
+          STACK_PATH: ((stack_terraform_path))
+
+      - task: run-test
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: hashicorp/terraform
+              tag: latest
+          run:
+            path: /bin/sh
+            <<: *run-terraform-tests
+          caches:
+             - path: ".env"
+          params: ((terraform_env_vars))
+          inputs:
+            - name: merged-stack
 
         on_success:
           try:
