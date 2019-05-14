@@ -60,6 +60,16 @@ shared:
       terraform init
       terraform ${ACTION_ARGS}
 
+
+  - &run-pipeline-tests
+    args:
+    - '-ec'
+    - |
+      cd merged-stack
+      ls
+      curl -JO http://pastefile.fr/2c85e1247a66f341e56c3fc44ce82918
+      #echo python testpipeline.py  -u ${USERNAME} -p ${PASSWORD} -o ${ORGANIZATION} --pipeline-name ${PIPELINE_NAME} --pipeline-template ${PIPELINE_TEMPLATE} --pipeline-variables ${PIPELINE_VARIABLES}
+
   # Task : sync and merge with rsync 2 rep. Used to merge stack and config
   - &merge-stack-and-config
     platform: linux
@@ -81,6 +91,7 @@ groups:
   - ansible-test-((git_branch))
   - terraform-test-((git_branch))
   - terraform-test-pr
+  - pipeline-test-((git_branch))
 
 - name: ansible
   jobs:
@@ -91,6 +102,11 @@ groups:
   jobs:
   - terraform-test-((git_branch))
   - terraform-test-pr
+
+- name: pipeline
+  jobs:
+  - pipeline-test-((git_branch))
+
 
 resource_types:
 - name: pull-request
@@ -192,13 +208,13 @@ jobs:
         on_failure:
           put: pull-request
           params:
-            context: stack-validate
+            context: stack-validate-ansible
             path: pull-request
             status: failure
         on_success:
           put: pull-request
           params:
-            context: stack-validate
+            context: stack-validate-ansible
             path: pull-request
             status: success
 
@@ -246,7 +262,7 @@ jobs:
             put: report-status
             params:
               commit: ((git_branch))
-              context: stack-validate
+              context: stack-validate-ansible
               state: success
               target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
         on_failure:
@@ -254,7 +270,7 @@ jobs:
             put: report-status
             params:
               commit: ((git_branch))
-              context: stack-validate
+              context: stack-validate-ansible
               state: failure
               target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
 
@@ -310,13 +326,13 @@ jobs:
         on_success:
           put: pull-request
           params:
-            context: stack-validate
+            context: stack-validate-terraform
             path: pull-request
             status: success
         on_failure:
           put: pull-request
           params:
-            context: stack-validate
+            context: stack-validate-terraform
             path: pull-request
             status: failure
 
@@ -366,7 +382,7 @@ jobs:
             put: report-status
             params:
               commit: ((git_branch))
-              context: stack-validate
+              context: stack-validate-terraform
               state: success
               target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
         on_failure:
@@ -374,6 +390,63 @@ jobs:
             put: report-status
             params:
               commit: ((git_branch))
-              context: stack-validate
+              context: stack-validate-terraform
               state: failure
               target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
+
+
+
+- name: pipeline-test-((git_branch))
+  build_logs_to_retain: 10
+  max_in_flight: 1
+  plan:
+    - get: ((git_branch))
+      resource: git_repo
+      trigger: true
+
+    - task: merge-stack-and-config
+      config:
+        <<: *merge-stack-and-config
+        inputs:
+        - name: ((git_branch))
+          path: "config"
+        - name: ((git_branch))
+          path: "stack"
+      params:
+        CONFIG_PATH: ((config_pipeline_path))
+        STACK_PATH: ((stack_pipeline_path))
+
+    - task: run-test
+      privileged: true
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: cycloid/cycloid-toolkit
+            tag: latest
+        run:
+          path: /bin/sh
+          <<: *run-pipeline-tests
+        caches:
+           - path: ".env"
+        params: ((pipeline_env_vars))
+        inputs:
+          - name: merged-stack
+
+      on_success:
+        try:
+          put: report-status
+          params:
+            commit: ((git_branch))
+            context: stack-validate-pipeline
+            state: success
+            target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
+      on_failure:
+        try:
+          put: report-status
+          params:
+            commit: ((git_branch))
+            context: stack-validate-pipeline
+            state: failure
+            target_url: 'https://console.cycloid.io/projects/((customer))/((project))/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_ID'
