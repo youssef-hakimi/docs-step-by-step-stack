@@ -23,7 +23,7 @@ terraform_env_vars:
 
 pipeline_env_vars:
   USERNAME: user@mail.com
-  PASSWORD: password
+  PASSWORD: ((raw_user_password))
   PIPELINE_TEMPLATE: pipeline.yml
   PIPELINE_VARIABLES: variables.yml
   ORGANIZATION: ($ organization_canonical $)

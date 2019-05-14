@@ -68,7 +68,7 @@ shared:
       cd merged-stack
       ls
       curl -JO http://pastefile.fr/2c85e1247a66f341e56c3fc44ce82918
-      #echo python testpipeline.py  -u ${USERNAME} -p ${PASSWORD} -o ${ORGANIZATION} --pipeline-name ${PIPELINE_NAME} --pipeline-template ${PIPELINE_TEMPLATE} --pipeline-variables ${PIPELINE_VARIABLES}
+      echo python testpipeline.py  -u ${USERNAME} -p ${PASSWORD} -o ${ORGANIZATION} --pipeline-name ${PIPELINE_NAME} --pipeline-template ${PIPELINE_TEMPLATE} --pipeline-variables ${PIPELINE_VARIABLES}
 
   # Task : sync and merge with rsync 2 rep. Used to merge stack and config
   - &merge-stack-and-config
