@@ -27,7 +27,7 @@ pipeline_env_vars:
   PIPELINE_TEMPLATE: pipeline.yml
   PIPELINE_VARIABLES: variables.yml
   ORGANIZATION: ($ organization_canonical $)
-  PIPELINE_NAME: ($ project $)-($ environment $)
+  PIPELINE_NAME: ($ project $)-($ environment $)-validate
 
 #. config_terraform_path (required): .ci/terraform
 #+ Path of Terraform files in the config git repository
