@@ -1,6 +1,6 @@
 # Configuration of the CI pipeline
 name: 'My test stack'
-canonical: 'stack-flo-test'
+canonical: 'stack-flo-testazertyuiopqsdfgdfg'
 description: 'Test with terraform'
 keywords:
   - 'aws'
