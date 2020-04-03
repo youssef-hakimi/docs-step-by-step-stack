@@ -4,6 +4,7 @@ groups:
     - build-application
     - unittest
     - terraform-plan
+    - terraform-apply
 
 resource_types:
   - name: terraform
@@ -134,9 +135,30 @@ jobs:
     - do:
       - get: git_lambda-code
         passed: [unittest]
+      - get: s3_lambda-release
+        passed: [unittest]
+        trigger: true
       - get: git_stack
         trigger: true
       - put: tfstate
         params:
           plan_only: true
+          terraform_source: git_stack/stack-lambda/terraform
+
+  - name: terraform-apply
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    plan:
+    - do:
+      - get: git_lambda-code
+        passed: [terraform-plan]
+      - get: s3_lambda-release
+        passed: [terraform-plan]
+      - get: git_stack
+        passed: [terraform-plan]
+      - get: tfstate
+        passed: [terraform-plan]
+      - put: tfstate
+        params:
+          plan_run: true
           terraform_source: git_stack/stack-lambda/terraform
