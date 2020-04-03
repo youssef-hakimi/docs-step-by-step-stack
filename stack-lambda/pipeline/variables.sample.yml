@@ -6,3 +6,12 @@ customer: ($ organization_canonical $)
 lambda_git_repository: git@github.com:cycloid-community-catalog/docs-step-by-step-stack.git
 lambda_git_ssh_key: ((ssh_step-by-step.ssh_key))
 lambda_git_branch: code
+
+# Aws access to use inside the pipeline
+aws_access_key: ((aws_step-by-step.access_key))
+aws_secret_key: ((aws_step-by-step.secret_key))
+aws_default_region: eu-west-1
+
+# AWS s3 bucket used for lambda release code
+lambda_release_bucket_name: ($ organization_canonical $)-deploy
+lambda_release_bucket_object_path: /($ project $)/($ environment $)/($ project $).zip

@@ -12,6 +12,16 @@ resources:
       branch: ((lambda_git_branch))
       private_key: ((lambda_git_ssh_key))
 
+  - name: s3_lambda-release
+    type: s3
+    source:
+      bucket: ((lambda_release_bucket_name))
+      versioned_file: ((lambda_release_bucket_object_path))
+      private: true
+      region_name: ((aws_default_region))
+      access_key_id: ((aws_access_key))
+      secret_access_key: ((aws_secret_key))
+
 jobs:
   - name: build-application
     max_in_flight: 1
@@ -43,3 +53,9 @@ jobs:
           outputs:
           - name: release
             path: "release"
+
+      - put: s3_lambda-release
+        params:
+          acl: private
+          file: release/((project)).zip
+
