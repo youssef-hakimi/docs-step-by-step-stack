@@ -15,3 +15,7 @@ aws_default_region: eu-west-1
 # AWS s3 bucket used for lambda release code
 lambda_release_bucket_name: ($ organization_canonical $)-deploy
 lambda_release_bucket_object_path: /($ project $)/($ environment $)/($ project $).zip
+
+# Terraform tfstate storage Configuration
+terraform_storage_bucket_name: ($ organization_canonical $)-terraform-remote-state
+terraform_storage_bucket_path: ($ project $)
