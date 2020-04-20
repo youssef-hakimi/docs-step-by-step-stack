@@ -39,6 +39,11 @@ resource_types:
       repository: ljfranklin/terraform-resource
       tag: '0.12.24'
 
+  - name: cycloid-events
+    type: docker-image
+    source:
+      repository: cycloid/cycloid-events-resource
+
 resources:
   - name: git_lambda-code
     type: git
@@ -95,6 +100,24 @@ resources:
         env: ((env))
         project: ((project))
         customer: ((customer))
+
+  - name: cycloid-events
+    type: cycloid-events
+    source:
+      api_login: ((api_login))
+      api_password: ((api_password))
+      api_url: ((api_url))
+      icon: fa-code-branch
+      organization: ((customer))
+      severity: info
+      type: Custom
+      tags:
+        - key: project
+          value: ((project))
+        - key: env
+          value: ((env))
+        - key: customer
+          value: ((customer))
 
 jobs:
   - name: build-application
@@ -233,3 +256,16 @@ jobs:
             AWS_ACCESS_KEY_ID: ((aws_access_key))
             AWS_SECRET_ACCESS_KEY: ((aws_secret_key))
             AWS_DEFAULT_REGION: ((aws_default_region))
+      on_failure:
+        do:
+        - put: cycloid-events
+          params:
+            severity: crit
+            message: Oops
+            title: The deployment of ((project)) owl have failed on ((env)) environment
+      on_success:
+        do:
+        - put: cycloid-events
+          params:
+            message: Congrats !
+            title: Successful deployment of ((project)) owl on ((env)) environment
