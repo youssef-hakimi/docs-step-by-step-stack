@@ -3,7 +3,7 @@ data "aws_ami" "debian" {
 
   filter {
     name   = "name"
-    values = ["${var.debian_ami_name}"]
+    values = ["debian-stretch-*"]
   }
 
   filter {
