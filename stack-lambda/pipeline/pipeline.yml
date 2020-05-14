@@ -1,0 +1,45 @@
+groups:
+  - name: all
+    jobs:
+    - build-application
+
+resources:
+  - name: git_lambda-code
+    type: git
+    check_every: 2m
+    source:
+      uri: ((lambda_git_repository))
+      branch: ((lambda_git_branch))
+      private_key: ((lambda_git_ssh_key))
+
+jobs:
+  - name: build-application
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    plan:
+    - do:
+      - get: git_lambda-code
+        trigger: true
+
+      - task: build-release
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: cycloid/cycloid-toolkit
+              tag: latest
+          run:
+            path: /bin/bash
+            args:
+            - -exc
+            - |
+              DIR=${PWD}
+              cd ${DIR}/code/
+              zip -r ${DIR}/release/((project)).zip *
+          inputs:
+          - name: git_lambda-code
+            path: code
+          outputs:
+          - name: release
+            path: "release"

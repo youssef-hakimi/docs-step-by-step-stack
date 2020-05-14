@@ -1,0 +1,8 @@
+env: ($ environment $)
+project: ($ project $)
+customer: ($ organization_canonical $)
+
+# Code repo configuration
+lambda_git_repository: git@github.com:cycloid-community-catalog/docs-step-by-step-stack.git
+lambda_git_ssh_key: ((ssh_step-by-step.ssh_key))
+lambda_git_branch: code
