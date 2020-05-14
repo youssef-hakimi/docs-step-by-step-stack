@@ -1,3 +1,28 @@
+# YAML anchors
+shared:
+  - &task-merge-stack-and-config
+    task: merge-stack-and-config
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: cycloid/cycloid-toolkit
+          tag: latest
+      run:
+        path: /usr/bin/merge-stack-and-config
+      inputs:
+        - name: git_config
+          path: "config"
+        - name: git_stack
+          path: "stack"
+      outputs:
+        - name: merged-stack/stack-lambda/terraform
+          path: "merged-stack"
+    params:
+      CONFIG_PATH: ((project))/terraform/((env))
+      STACK_PATH: stack-lambda/terraform
+
 groups:
   - name: all
     jobs:
@@ -31,6 +56,14 @@ resources:
       private_key: ((lambda_git_ssh_key))
       paths:
         - stack-lambda/terraform/*
+
+  - name: git_config
+    type: git
+    check_every: 2m
+    source:
+      uri: ((lambda_git_repository))
+      branch: ((config_git_branch))
+      private_key: ((lambda_git_ssh_key))
 
   - name: s3_lambda-release
     type: s3
@@ -140,10 +173,13 @@ jobs:
         trigger: true
       - get: git_stack
         trigger: true
+      - get: git_config
+        trigger: true
+      - *task-merge-stack-and-config
       - put: tfstate
         params:
           plan_only: true
-          terraform_source: git_stack/stack-lambda/terraform
+          terraform_source: merged-stack/stack-lambda/terraform
 
   - name: terraform-apply
     max_in_flight: 1
@@ -158,7 +194,10 @@ jobs:
         passed: [terraform-plan]
       - get: tfstate
         passed: [terraform-plan]
+      - get: git_config
+        passed: [terraform-plan]
+      - *task-merge-stack-and-config
       - put: tfstate
         params:
           plan_run: true
-          terraform_source: git_stack/stack-lambda/terraform
+          terraform_source: merged-stack/stack-lambda/terraform
