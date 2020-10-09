@@ -10,6 +10,7 @@ code_git_branch: code
 
 # Branch used to store the config of the stack
 git_repository: git@github.com:cycloid-community-catalog/docs-step-by-step-stack.git
+config_git_branch: config
 stack_git_branch: stacks
 
 # Terraform tfstate storage Configuration
