@@ -13,6 +13,11 @@ git_repository: git@github.com:cycloid-community-catalog/docs-step-by-step-stack
 config_git_branch: config
 stack_git_branch: stacks
 
+# Cycloid events configuration
+api_login: ((basic_auth_cyclobot-account.username))
+api_password: ((basic_auth_cyclobot-account.password))
+api_url: https://http-api.cycloid.io
+
 # Terraform tfstate storage Configuration
 terraform_storage_container_path: ($ project $)/($ environment $)
 terraform_storage_container_name: cycloid-demo
