@@ -55,6 +55,7 @@ groups:
   - unittest
   - terraform-plan
   - terraform-apply
+  - functional-tests
 
 resource_types:
 - name: terraform
@@ -186,3 +187,43 @@ jobs:
             terraform_source: merged-stack/
             var_files:
               - extracted-vars/terraform.tfvars
+
+  - name: functional-tests
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    plan:
+    - do:
+      - get: tfstate
+        passed: [terraform-apply]
+        trigger: true
+      - task: test
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: cycloid/cycloid-toolkit
+              tag: latest
+          run:
+            path: /bin/bash
+            args:
+            - -c
+            - |
+              echo "Dummy functional tests"
+
+              # Wait 5 min ec2 up
+              for i in {1..20}
+              do
+                STATUS=$(curl --connect-timeout 2 -s -o /dev/null -w '%{http_code}' $(jq -r .ip_address tfstate/metadata))
+                if [ $STATUS -eq 200 ]; then
+                  echo "Got 200! All done!"
+                  exit 0
+                else
+                  echo "Got $STATUS :( Not done yet... (retry ${i}/20)"
+                fi
+                sleep 15
+              done
+              echo "functional tests [Failed]"
+              exit 1
+          inputs:
+          - name: tfstate
