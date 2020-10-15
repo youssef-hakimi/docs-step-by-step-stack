@@ -64,6 +64,11 @@ resource_types:
     repository: ljfranklin/terraform-resource
     tag: '0.12.24'
 
+- name: cycloid-events
+  type: docker-image
+  source:
+    repository: cycloid/cycloid-events-resource
+
 resources:
 - name: tfstate
   type: terraform
@@ -110,6 +115,24 @@ resources:
   source:
     uri: ((code_git_public_repository))
     branch: ((code_git_branch))
+
+- name: cycloid-events
+  type: cycloid-events
+  source:
+    api_login: ((api_login))
+    api_password: ((api_password))
+    api_url: ((api_url))
+    icon: fa-code-branch
+    organization: ((customer))
+    severity: info
+    type: Custom
+    tags:
+      - key: project
+        value: ((project))
+      - key: env
+        value: ((env))
+      - key: customer
+        value: ((customer))
 
 jobs:
   - name: unittest
@@ -227,3 +250,16 @@ jobs:
               exit 1
           inputs:
           - name: tfstate
+      on_failure:
+        do:
+        - put: cycloid-events
+          params:
+            severity: crit
+            message: Oops
+            title: The deployment of ((project)) owl have failed on ((env)) environment
+      on_success:
+        do:
+        - put: cycloid-events
+          params:
+            message: Congrats !
+            title: Successful deployment of ((project)) owl on ((env)) environment
