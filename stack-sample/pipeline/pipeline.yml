@@ -1,5 +1,28 @@
 # YAML anchors
 shared:
+  - &task-merge-stack-and-config
+    task: merge-stack-and-config
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: cycloid/cycloid-toolkit
+          tag: latest
+      run:
+        path: /usr/bin/merge-stack-and-config
+      inputs:
+        - name: git_config
+          path: "config"
+        - name: git_stack
+          path: "stack"
+      outputs:
+        - name: merged-stack
+          path: "merged-stack"
+    params:
+      CONFIG_PATH: ((project))/terraform/((env))
+      STACK_PATH: stack-sample/terraform
+
   - &task-get-commit
     task: get-commit
     config:
@@ -71,6 +94,16 @@ resources:
     paths:
       - stack-sample/terraform/*
 
+# The Terraform config (will be merged with the stack)
+- name: git_config
+  type: git
+  source:
+    uri: ((git_repository))
+    branch: ((config_git_branch))
+    private_key: ((git_ssh_key))
+    paths:
+      - ((project))/terraform/((env))/*
+
 - name: git_code
   type: git
   source:
@@ -111,6 +144,9 @@ jobs:
       - do:
         - get: git_stack
           trigger: true
+        - get: git_config
+          trigger: true
+        - *task-merge-stack-and-config
         - get: git_code
           trigger: true
           passed:
@@ -119,7 +155,7 @@ jobs:
         - put: tfstate
           params:
             plan_only: true
-            terraform_source: git_stack/stack-sample/terraform
+            terraform_source: merged-stack/
             var_files:
               - extracted-vars/terraform.tfvars
 
@@ -131,6 +167,10 @@ jobs:
           trigger: false
           passed:
             - terraform-plan
+        - get: git_config
+          trigger: false
+          passed:
+            - terraform-plan
         - get: tfstate
           trigger: false
           passed:
@@ -138,10 +178,11 @@ jobs:
         - get: git_code
           passed:
             - terraform-plan
+        - *task-merge-stack-and-config
         - *task-get-commit
         - put: tfstate
           params:
             plan_run: true
-            terraform_source: git_stack/stack-sample/terraform
+            terraform_source: merged-stack/
             var_files:
               - extracted-vars/terraform.tfvars
