@@ -56,6 +56,9 @@ groups:
   - terraform-plan
   - terraform-apply
   - functional-tests
+- name: destroy
+  jobs:
+  - terraform-destroy
 
 resource_types:
 - name: terraform
@@ -210,6 +213,23 @@ jobs:
             terraform_source: merged-stack/
             var_files:
               - extracted-vars/terraform.tfvars
+
+  - name: terraform-destroy
+    max_in_flight: 1
+    build_logs_to_retain: 10
+    plan:
+      - do:
+          - get: git_stack
+            trigger: false
+          - get: git_config
+            trigger: false
+          - *task-merge-stack-and-config
+          - put: tfstate
+            params:
+              action: destroy
+              terraform_source: merged-stack/
+            get_params:
+              action: destroy
 
   - name: functional-tests
     max_in_flight: 1
