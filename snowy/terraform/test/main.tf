@@ -1,8 +1,11 @@
-module "lambda" {
-  source = "./module-lambda"
+module "instance" {
+  source   = "./module-aws"
+  env      = "${var.env}"
+  customer = "${var.customer}"
+  project  = "${var.project}"
 
-  env            = var.env
-  project        = var.project
-  customer       = var.customer
-  lambda_env_foo = "bar"
+  git_code_commit = "${var.git_code_commit}"
+  git_code_repo   = "${var.git_code_repo}"
+  instance_type   = "t3.small"
+
 }
