@@ -11,7 +11,7 @@ status: 'private'
 description: |
   This stack will deploy a running Wordpress on a compute instance.
 author: 'Cycloid'
-image: 'https://raw.githubusercontent.com/cycloid-community-catalog/docs-step-by-step-stack/stack-gcp/icon.png'
+image: 'https://github.com/youssef-hakimi/docs-step-by-step-stack/stack-gcp/icon.png'
 technologies:
   - technology: Wordpress
     version: n/a
