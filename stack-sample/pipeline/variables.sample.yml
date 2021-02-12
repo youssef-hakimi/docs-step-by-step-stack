@@ -5,7 +5,7 @@ customer: ($ organization_canonical $)
 git_ssh_key: ((ssh_step-by-step.ssh_key))
 
 # Code repo configuration
-code_git_public_repository: https://github.com/cycloid-community-catalog/docs-step-by-step-stack.git
+code_git_public_repository: https://github.com/youssef-hakimi/docs-step-by-step-stack.git
 code_git_branch: code
 
 # Branch used to store the config of the stack
