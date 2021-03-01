@@ -6,7 +6,7 @@ variable "git_code_commit" {
   default = "origin/code"
 }
 variable "git_code_repo" {
-  default = "https://github.com/cycloid-community-catalog/docs-step-by-step-stack"
+  default = "https://github.com/youssef-hakimi/docs-step-by-step-stack"
 }
 
 # GCP
