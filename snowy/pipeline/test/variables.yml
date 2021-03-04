@@ -23,5 +23,5 @@ git_repository: git@github.com:youssef-hakimi/docs-step-by-step-stack.git
 git_ssh_key: ((ssh_step-by-step.ssh_key))
 project: snowy
 stack_git_branch: code
-terraform_storage_bucket_name: gcptest-terraform-remote-state
-terraform_storage_bucket_path: vocal-nova-304414
+terraform_storage_bucket_name: youssef-hakimi-terraform-remote-state
+terraform_storage_bucket_path: snowy
