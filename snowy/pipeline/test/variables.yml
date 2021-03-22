@@ -14,14 +14,14 @@ api_url: https://http-api.cycloid.io
 code_git_branch: code
 code_git_public_repository: https://github.com/youssef-hakimi/docs-step-by-step-stack
 config_git_branch: config
-customer: youssef-hakimi
+customer: youssefpro
 env: test
 gcp_credentials_json: ((gcp_step-by-step.json_key))
 gcp_project: cycloid-demo
 gcp_zone: europe-west1-b
 git_repository: git@github.com:youssef-hakimi/docs-step-by-step-stack.git
-git_ssh_key: ((ssh_step-by-step.ssh_key))
+git_ssh_key: ""
 project: snowy
 stack_git_branch: code
-terraform_storage_bucket_name: youssef-hakimi-terraform-remote-state
+terraform_storage_bucket_name: youssefpro-terraform-remote-state
 terraform_storage_bucket_path: snowy
