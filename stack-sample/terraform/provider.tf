@@ -15,7 +15,7 @@ provider "google" {
   project = var.gcp_project
 }
 variable "gcp_project" {
-  default = "cycloid-demo"
+  default = "vocal-nova-304414"
 }
 variable "gcp_zone" {
   default = "europe-west1-b"
