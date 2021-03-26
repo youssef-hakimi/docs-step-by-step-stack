@@ -2,7 +2,8 @@ env: test
 project: snowy
 customer: youssefpro
 
-git_ssh_key: ((ssh_step-by-step.ssh_key))
+git_ssh_key: ((ssh_step-by-step-ssh.ssh_key))
+               
 
 # Code repo configuration
 code_git_public_repository: https://github.com/youssef-hakimi/docs-step-by-step-stack
