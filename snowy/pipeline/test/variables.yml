@@ -3,7 +3,6 @@ project: snowy
 customer: youssefpro
 
 git_ssh_key: ((ssh_step-by-step-ssh.ssh_key))
-               
 
 # Code repo configuration
 code_git_public_repository: https://github.com/youssef-hakimi/docs-step-by-step-stack
@@ -12,7 +11,7 @@ code_git_branch: code
 # Branch used to store the config of the stack
 git_repository: git@github.com:youssef-hakimi/docs-step-by-step-stack.git
 config_git_branch: config
-stack_git_branch: code
+stack_git_branch: stack-gcp
 
 # Terraform tfstate storage Configuration
 terraform_storage_bucket_name: youssefpro-terraform-remote-state
