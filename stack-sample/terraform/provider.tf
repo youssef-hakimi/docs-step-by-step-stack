@@ -18,5 +18,5 @@ variable "gcp_project" {
   default = "vocal-nova-304414"
 }
 variable "gcp_zone" {
-  default = "europe-west1-b"
+  default = "europe-west1-c"
 }
