@@ -18,8 +18,8 @@ terraform_storage_bucket_name: youssefpro-terraform-remote-state
 terraform_storage_bucket_path: snowy
 
 # Cycloid events configuration
-api_login: ((vault.role_id))
-api_password: ((vault.secret_id))
+api_login: ((basic_auth_cyclobot-account.username))
+api_password: ((basic_auth_cyclobot-account.password))
 api_url: https://http-api.cycloid.io
 
 gcp_project: vocal-nova-304414
